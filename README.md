@@ -50,34 +50,99 @@ cp path_to_input_countMATRIX RAWcount.txt
 ### ex) cp RAWcount_DIFF.txt RAWcount.txt
 ```
 
-### R
+### Input count matrix (`RAWcount.txt`)
 
+- Tab-separated text file with a header row.
+- First column: gene identifiers. Remaining columns: raw read counts for each sample.
+- Sample columns must be **grouped by condition in the same order as `full_condition`**, with the number of columns per condition matching `number_of_rep`.
+
+## Usage
+
+### 1. Run HARMONIC
 
 ```r
 # install.packages("remotes")
 remotes::install_github("ERASMUSlab/HARMONIC")
+library(haRmonic)
 
-HARMONIC_ANALYSIS(filepath = "/home/RNA/gitHARMONIC/HARMONIC_DIFF/HARMONIC",
-               type = "broad",
-               full_condition = c("DAY0","DAY4","DAY7","DAY10","DAY14","DAY21"),
-               number_of_rep = c(3,3,3,6,3,3),
-               DEG_list_name = "input_DEG_list.txt",
-               mango_design = c("DAY4_DAY0_UP","DAY7_DAY0_UP","DAY10_DAY0_UP","DAY14_DAY0_UP","DAY21_DAY0_UP"),
-               core = 5,
-               ref_genome = "mm",
-               PASSED_RATIO = 15,
-               PASSED_NUM = 3,
-               similarity = 80,
-               FC = 2, 
-               condition = c(1,3), 
-               dynamic_analyisis = "T",
-               preprocessing = "T")
+HARMONIC_ANALYSIS(
+  filepath       = "/path/to/HARMONIC_project_name/HARMONIC",
+  type           = "standard",
+  full_condition = c("Control", "TreatmentA", "TreatmentB"),
+  number_of_rep  = c(3, 3, 3),
+  DEG_list_name  = "input_DEG_list.txt",
+  mango_design   = c("TreatmentA_Control_UP", "TreatmentB_Control_UP"),
+  core           = 4,
+  ref_genome     = "mm",
+  PASSED_NUM     = 3,
+  PASSED_RATIO   = 25,
+  similarity     = 60,
+  FC             = 2,
+  preprocessing  = "T"
+)
 ```
+
+#### Parameters
+
+- `filepath` — absolute path to the `HARMONIC` folder of your project (the output of `pwd` in the setup step).
+- `type` — DEG calling mode: `"standard"` (adjusted P < 0.05, |fold change| ≥ 2) or `"broad"` (adjusted P < 0.05, |fold change| ≥ 1.5).
+- `full_condition` — names of all experimental conditions, in the same order as the sample columns of `RAWcount.txt`. Condition names must not contain underscores (`_`).
+- `number_of_rep` — number of replicates for each condition, in the same order and length as `full_condition`.
+- `DEG_list_name` — file name of the DEG list inside `filepath` (`input_DEG_list.txt` in the provided template).
+- `mango_design` — comparisons to analyze, written as `<A>_<B>_UP` (genes up-regulated in A relative to B) or `<A>_<B>_DOWN` (genes down-regulated in A relative to B). `<A>` and `<B>` must be names listed in `full_condition`; `<B>` is used as the reference condition.
+- `core` — number of CPU cores to use.
+- `ref_genome` — reference organism: `"mm"` (mouse) or `"hs"` (human).
+- `PASSED_NUM` — minimum number of enriched GO terms required for a tree to be retained as an active tree.
+- `PASSED_RATIO` — minimum percentage of enriched GO terms within a tree required for it to be retained as an active tree.
+- `similarity` — overlap threshold (%) above which active trees are merged into a single structure.
+- `FC` — HWES ratio threshold between comparisons; trees whose HWES differs by at least this factor are classified as condition-specific, otherwise as common.
+- `preprocessing` — `"T"` to run differential expression and GO enrichment before tree construction, or `"F"` to reuse existing preprocessing outputs.
+
+**Recommended starting values:** `PASSED_NUM = 3`, `PASSED_RATIO = 25` and `similarity = 60`, as used in the HARMONIC manuscript.
+
+### 2. Adjust parameters
+
+Parameters can be tuned to the size of the enrichment input and the desired level of compression:
+
+- **Increase `PASSED_NUM` or `PASSED_RATIO`** — stricter active-tree filtering; fewer trees are retained, each supported by more enriched terms. Decrease them for more permissive filtering.
+- **Decrease `similarity`** — trees are merged at a lower overlap, producing fewer and broader structures. Increase it to merge less and keep more, narrower structures.
+- **Decrease `FC`** — smaller HWES differences are sufficient to call a tree condition-specific, so more trees are classified as condition-specific and fewer as common. Increase it for the opposite effect.
+- **Use `type = "broad"`** — if a comparison yields fewer than two active trees with `"standard"`, the more permissive DEG threshold can recover additional enrichment input.
+- **Set `preprocessing = "F"`** — skip differential expression and GO enrichment when their outputs from a previous run are already present in `filepath`, for example when only the tree parameters are changed.
+
+### 3. Dynamic analysis
+
+Dynamic analysis identifies active trees that are selectively active in a chosen set of comparisons, for example the late time points of a differentiation time course, compared with the remaining comparisons. A tree is reported when it is active in every selected comparison and its HWES in the selected comparisons exceeds that in the remaining comparisons by at least `FC` (both minimum versus maximum and mean versus mean).
+
+```r
+HARMONIC_ANALYSIS(
+  filepath          = "/path/to/HARMONIC_project_name/HARMONIC",
+  type              = "standard",
+  full_condition    = c("Day0", "Day4", "Day7", "Day14"),
+  number_of_rep     = c(3, 3, 3, 3),
+  DEG_list_name     = "input_DEG_list.txt",
+  mango_design      = c("Day4_Day0_UP", "Day7_Day0_UP", "Day14_Day0_UP"),
+  core              = 4,
+  ref_genome        = "mm",
+  PASSED_NUM        = 3,
+  PASSED_RATIO      = 25,
+  similarity        = 60,
+  FC                = 2,
+  condition         = 2:3,
+  dynamic_analyisis = "T",
+  preprocessing     = "F"
+)
+```
+
+- `condition` — 1-based indices of the comparisons in `mango_design` to treat as the selected set. Use `2:3` for a consecutive range, or `c(1, 3)` for specific, non-consecutive comparisons.
+- `dynamic_analyisis` — `"T"` to run dynamic analysis, `"F"` (default) to skip it. Note that the argument name is spelled `dynamic_analyisis` in the current release.
+
+Results are written to `HARMONIC_SEPERATE_forMULTI_range.txt` in `filepath`.
 
 ## Documentation
 
 Full documentation and tutorials:
-https://erasmuslab.github.io/HARMONIC
+https://erasmus-ngs.github.io/HARMONIC
 
 
 ## Citation
