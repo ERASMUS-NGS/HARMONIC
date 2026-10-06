@@ -7,8 +7,8 @@ HARMONIC is an R package for Gene Ontology (GO) Biological Process enrichment an
 >- **Key idea 1 — Tree organizing:** HARMONIC groups similar terms into trees to reduce redundancy and compress results into interpretable units.
 >- **Key idea 2 — Active-tree filtering:** HARMONIC suppresses isolated, single-term–driven signals using an **active-tree criterion**.
 >- **Multiple-case support:** HARMONIC aligns results from multiple comparisons into a **shared tree structure** and classifies **common vs condition-specific** trees using **HWES** and relative signal strength across conditions.
->- **Parameter recommendations:** A parameter search provides **input-size–specific recommended settings**.
->- **Benchmarking:** Evaluated across **31 single-case analyses** against **ORA** and **GSEA** using **adjusted p-values**, **fraction of terms assigned**, and **rich factors** to assess interpretability.
+>- **Parameter calibration:** Default active-tree parameters were **calibrated on osteoblast differentiation comparisons** and **validated on independent public comparisons**.
+>- **Benchmarking:** Compared with representative GO term-organization approaches (**rrvgo**, **REVIGO**, **simplifyEnrichment**, **DAVID** and **topGO**) in terms of **term reduction**, **enrichment strength of retained terms**, **structural compression** and **within-cluster gene coherence**.
 >- **Validation:** Demonstrated reproduction of reported signals across public datasets spanning **knockout**, **cancer**, **differentiation**, **dose–response**, and **cohort** designs.
 >- **Usability:** Provides **R-based visualization functions** for both single- and multiple-case settings to aid interpretation.
 >- **Take-home:** HARMONIC reduces redundancy and structural false positives driven by the GO DAG, enabling **reproducible term-pattern summarization** for multi-comparison studies.
@@ -148,4 +148,4 @@ https://erasmus-ngs.github.io/HARMONIC
 ## Citation
 
 If you use HARMONIC in your research, please cite:
-https://erasmuslab.github.io/HARMONIC/authors.html#citation
+https://erasmus-ngs.github.io/HARMONIC/authors.html#citation
